@@ -1,4 +1,4 @@
-###daquf is this?
+###dafuq is this?
 Use this script to automatically download and install VirtualHub from [yoctopuce.ch]().
 
 This version of the script works only for the armhf VirtualHub (Raspberry Pi & co).
