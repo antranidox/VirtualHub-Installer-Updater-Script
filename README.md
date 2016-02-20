@@ -1,5 +1,5 @@
 ###dafuq is this?
-Use this script to automatically download and install VirtualHub from [yoctopuce.ch]().
+Use this script to automatically download and install VirtualHub from yoctopuce.ch.
 
 This version of the script works only for the armhf VirtualHub (Raspberry Pi & co).
 It uses Regex to check for the newest version on the website and compares to the already installed (or just doing a new install, if virtualhub wasnt found on the device).
