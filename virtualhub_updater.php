@@ -5,8 +5,9 @@ if(!file_exists("/usr/bin/unzip")) {echo "Please install unzip first. \n apt-get
 $cred="\033[33m"; $cgreen="\033[32m"; $cwhite="\033[0m"; $clblue="\033[34m";
 
 echo $line=str_repeat("-=", 35);
-echo "\n          VirtualHub Linux Installer / Updater Script 1.0\n";
+echo "\n          VirtualHub Linux Installer / Updater Script 1.1\n";
 echo $line."\n\n";
+
 
 $ydlp = file_get_contents("http://www.yoctopuce.com/EN/virtualhub.php");
 preg_match("/VirtualHub\\.linux\\.(\\d*).zip/", $ydlp, $current_version); // getting build-number from website
@@ -15,6 +16,13 @@ preg_match("/(\\d*) \\(/", $iversion_raw, $installed_version); // extracting onl
 if(is_numeric($installed_version[1])) { echo "                Installed VirtualHub Build: ".$installed_version[1];} 
 else {echo "                Installed VirtualHub Build: $cred NONE $cwhite";}
       echo "\n                Current   VirtualHub Build: ".$current_version[1];
+     
+// finding the right VirtualHub binary 
+exec('find /tmp/vh_install/ -name VirtualHub',$vhubs);
+foreach($vhubs as $biloc){
+exec('chmod +x '.$biloc.' && '.$biloc.' -v > /dev/null 2>&1',$output,$ecode);
+if($ecode==0) {$binary_location=$biloc; break;}
+}
 
 // update VH
 if($installed_version[1]!=$current_version[1]) {
@@ -28,7 +36,7 @@ echo "Unzipping ".temp_dir."vh.zip now to ".temp_dir."vh_install";
 echo $res2 = shell_exec("unzip -o ".temp_dir."vh.zip -d ".temp_dir."vh_install");
 unlink(temp_dir."vh.zip");
 echo "Installing VirtualHub binary...";
-echo $res3 = shell_exec("cp -f -v ".temp_dir."vh_install/armhf/VirtualHub /usr/sbin/VirtualHub");
+echo $res3 = shell_exec("cp -f -v ".$binary_location." /usr/sbin/VirtualHub");
 echo "Installing Startscript for VirtualHub...\n";
 echo $res4 = shell_exec("cp -f -v ".temp_dir."vh_install/startup_script/yVirtualHub /etc/init.d/VirtualHub")."\n";
 echo $res5 = shell_exec("chmod +x /etc/init.d/VirtualHub && update-rc.d VirtualHub defaults")."\n";
