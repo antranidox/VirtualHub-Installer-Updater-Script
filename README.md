@@ -19,7 +19,7 @@ Install the requirements with this command:
 `apt-get install curl php5-cli php5-curl unzip`
 
 ###Usage - the easy way:
-1. curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/vh_install.sh | bash
+1. `curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/vh_install.sh | bash`
 
 ###Usage:
 1. Download the virtualhub_updater.php file to your armhf device
