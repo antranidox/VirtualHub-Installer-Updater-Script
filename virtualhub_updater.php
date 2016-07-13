@@ -17,6 +17,19 @@ if(is_numeric($installed_version[1])) { echo "                Installed VirtualH
 else {echo "                Installed VirtualHub Build: $cred NONE $cwhite";}
       echo "\n                Current   VirtualHub Build: ".$current_version[1];
      
+
+// update VH
+if($installed_version[1]!=$current_version[1]) {
+echo "\n\n $clblue $line \n                       a new update is available ...\n $line \n $cwhite";
+preg_match_all("/<a href='(\\/FR\\/downloads\\/VirtualHub\\.\\S*\\.\\d*.zip)/", $ydlp, $matches); // extracting file link
+$purl = "http://www.yoctopuce.com/".$matches[1][1];
+echo "\nDownloading VirtualHub Zip file from $purl to ".temp_dir."vh_install/";
+echo $res = shell_exec("curl -k -L $purl -o ".temp_dir."vh.zip");
+if(!file_exists(temp_dir."vh.zip")) {echo "\nfile not found, there seems to be a problem. sorry. ERR-1"; exit;}
+echo "Unzipping ".temp_dir."vh.zip now to ".temp_dir."vh_install";
+echo $res2 = shell_exec("unzip -o ".temp_dir."vh.zip -d ".temp_dir."vh_install");
+unlink(temp_dir."vh.zip");
+
 // finding the right VirtualHub binary
 $hsz_exists=false;
 exec('find /tmp/vh_install/ -name VirtualHub',$vhubs);
@@ -34,17 +47,6 @@ if(!isset($binary_location))
 	exit;
 }
 
-// update VH
-if($installed_version[1]!=$current_version[1]) {
-echo "\n\n $clblue $line \n                       a new update is available ...\n $line \n $cwhite";
-preg_match_all("/<a href='(\\/FR\\/downloads\\/VirtualHub\\.\\S*\\.\\d*.zip)/", $ydlp, $matches); // extracting file link
-$purl = "http://www.yoctopuce.com/".$matches[1][1];
-echo "\nDownloading VirtualHub Zip file from $purl to ".temp_dir."vh_install/";
-echo $res = shell_exec("curl -k -L $purl -o ".temp_dir."vh.zip");
-if(!file_exists(temp_dir."vh.zip")) {echo "\nfile not found, there seems to be a problem. sorry. ERR-1"; exit;}
-echo "Unzipping ".temp_dir."vh.zip now to ".temp_dir."vh_install";
-echo $res2 = shell_exec("unzip -o ".temp_dir."vh.zip -d ".temp_dir."vh_install");
-unlink(temp_dir."vh.zip");
 echo "\nInstalling VirtualHub binary...";
 echo $res3 = shell_exec("cp -f -v ".$binary_location." /usr/sbin/VirtualHub");
 echo "\nInstalling Startscript for VirtualHub...\n";
