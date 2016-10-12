@@ -7,7 +7,7 @@ It uses Regex to check for the newest VirtualHub version on the website and comp
 If a update is available it downloads it with curl to your device, unzip the zip file, installs the armhf binary (or x86 on Mac), installs the startscript and finally starts VirtualHub as a service.
 
 ###tested on
-Raspbian Pi1 & Pi2.
+Raspbian Pi1 & Pi2
 macOS Sierra (only install, without startscript and stuff)
 
 ####Requirements:
