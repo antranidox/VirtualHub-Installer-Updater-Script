@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "############################################################"
-echo " VIRTUALHUB INSTALLER-NG / UPDATER-NG SCRIPT, VERSION 3.3.0 "
+echo " VIRTUALHUB INSTALLER-NG / UPDATER-NG SCRIPT, VERSION 3.3.1 "
 echo "############################################################"
 
 # os: macOS
@@ -30,6 +30,7 @@ else
 # install dependencies
 echo "Installing dependencies..."
 apt-get install curl php5-cli php5-curl unzip wget libusb-1.0.0-dev -y
+/usr/bin/virtualhub_updater
 exit 0
 fi
 
