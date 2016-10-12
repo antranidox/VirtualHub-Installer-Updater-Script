@@ -19,12 +19,10 @@ Tested on Raspbian Pi1 & Pi2.
 On Linux, install the requirements with this command:
 `apt-get install curl php5-cli php5-curl unzip`
 
-on macOS, all requirements should be satisfied from the beginning.
-
-###Usage - the easy way:
+###Linux | usage - the easy way:
 1. `curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/vh_install.sh | bash`
 
-###Usage:
+###Usage macOS / Linux:
 1. Download the virtualhub_updater.php file to your armhf device or Mac
 2. `chmod +x virtualhub_updater.php`
 3. execute virtualhub_updater.php directly with `php virtualhub_updater.php` 
