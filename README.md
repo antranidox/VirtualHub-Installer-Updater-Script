@@ -1,12 +1,14 @@
-###dahell is this?
+###what is this?
 Use this script to automatically download and install VirtualHub from yoctopuce.ch.
 
+### tell me more
 This version of the script works for the armhf VirtualHub (Raspberry Pi & co) and on macOS.
 It uses Regex to check for the newest VirtualHub version on the website and compares to the already installed (or just doing a new install, if VirtualHub wasnt found on the device).
 If a update is available it downloads it with curl to your device, unzip the zip file, installs the armhf binary (or x86 on Mac), installs the startscript and finally starts VirtualHub as a service.
 
-Tested on Raspbian Pi1 & Pi2.
-..and on macOS Sierra (only install, without startscript and stuff)
+###tested on
+Raspbian Pi1 & Pi2.
+macOS Sierra (only install, without startscript and stuff)
 
 ####Requirements:
 * curl
@@ -19,10 +21,10 @@ Tested on Raspbian Pi1 & Pi2.
 On Linux, install the requirements with this command:
 `apt-get install curl php5-cli php5-curl unzip`
 
-###Linux | usage - the easy way:
+###Usage - the easy way:
 1. `curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/vh_install.sh | bash`
 
-###Usage macOS / Linux:
+###Usage
 1. Download the virtualhub_updater.php file to your armhf device or Mac
 2. `chmod +x virtualhub_updater.php`
 3. execute virtualhub_updater.php directly with `php virtualhub_updater.php` 
