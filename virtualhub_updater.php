@@ -60,10 +60,11 @@ unlink(temp_dir."vh.zip");
 $hsz_exists=false;
 exec('find /tmp/vh_install/ -name VirtualHub',$vhubs);
 foreach($vhubs as $biloc){
-exec('chmod +x '.$biloc.' && '.$biloc.' -v > /dev/null 2>&1',$output,$ecode);
-echo "\ntesting $biloc.. result: $ecode";
-if($ecode==127) {$hsz_exists=true; $bin127=$biloc;}
-if($ecode==0) {$binary_location=$biloc; break;}
+	if($biloc=="/tmp/vh_install/armel/VirtualHub") {continue;} // pi1 armhf fix!
+	exec('chmod +x '.$biloc.' && '.$biloc.' -v > /dev/null 2>&1',$output,$ecode);
+	echo "\ntesting $biloc.. result: $ecode";
+	if($ecode==127) {$hsz_exists=true; $bin127=$biloc;}
+	if($ecode==0) {$binary_location=$biloc; break;}
 }
 if(!isset($binary_location)) 
 {
@@ -76,14 +77,19 @@ if(!isset($binary_location))
 echo "\nInstalling VirtualHub binary to ".yAppLocation."...";
 echo $res3 = shell_exec("cp -f -v ".$binary_location." ".yAppLocation);
 
-// not on macOS, only on Linux
+// only on Linux (not on macOS)
 if(PHP_OS!="Darwin") {
-echo "\nInstalling Startscript for VirtualHub...\n";
-echo $res4 = shell_exec("cp -f -v ".temp_dir."vh_install/startup_script/yVirtualHub /etc/init.d/VirtualHub")."\n";
-echo $res5 = shell_exec("chmod +x /etc/init.d/VirtualHub && update-rc.d VirtualHub defaults")."\n";
-echo "\nStarting VirtualHub now as a service...\n";
-echo $res6 = shell_exec("service VirtualHub start && pidof VirtualHub")."\n";
-echo "\n$clblue Please check http://{THISIP}:4444 in your browser $cwhite \n$line\n$line";
+	echo "\nInstalling Startscript for VirtualHub...\n";
+	echo $res4 = shell_exec("cp -f -v ".temp_dir."vh_install/startup_script/yVirtualHub /etc/init.d/VirtualHub")."\n";
+	echo $res5 = shell_exec("chmod +x /etc/init.d/VirtualHub && update-rc.d VirtualHub defaults")."\n";
+	echo "\nStarting VirtualHub now as a service...\n";
+	echo $res6 = shell_exec("service VirtualHub start")."\n";
+	sleep(1);
+	exec("pidof VirtualHub",$pid_output,$ecodeX);
+	if($ecodeX==0) {
+	echo "\n$clblue VirtualHub is now running with PID ".$pid_output[0]."\n";
+	echo "\nPlease check http://{THISIP}:4444 in your browser $cwhite \n$line\n$line";
+	}
 }
 else
 {
