@@ -102,7 +102,7 @@ if not myVersion:
 	print("VirtualHub is not installed, installing it now")
 else:
 	if int(webVersion)==int(myVersion):
-		print("Installed VirtualHub is the newest available version (local: %s / web:%s)"%(myVersion,webVersion))
+		print("Installed VirtualHub is the newest available version (local: %s / web: %s)"%(myVersion,webVersion))
 		sys.exit()
 
 
