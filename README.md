@@ -1,31 +1,28 @@
-###what is this?
-Use this script to automatically download and install VirtualHub from yoctopuce.ch.
+### what is this?
+Use this script to automatically download and install VirtualHub from yoctopuce.com.
 
 ### tell me more
-This version of the script works for the armhf VirtualHub (Raspberry Pi & co) and on macOS.
+This version of the script works for Linux and on macOS.
 It uses Regex to check for the newest VirtualHub version on the website and compares to the already installed (or just doing a new install, if VirtualHub wasnt found on the device).
-If a update is available it downloads it with curl to your device, unzip the zip file, installs the armhf binary (or x86 on Mac), installs the startscript and finally starts VirtualHub as a service.
+If a update is available it downloads it to your device, unzips the zip file, installs the binary and the startscript (systemd only)
 
-###tested on
-+  Raspbian Pi1 & Pi2
-+  macOS Sierra (only install, without startscript and stuff)
+#### tested on
++  Raspbian stretch, python 2.7
++  macOS 10.13.3, python3.x
 
-####Requirements:
-* curl
-* php5-cli
-* php5-curl
-* unzip
+#### requirements:
+* python requests (install by: pip install requests)
+* python
 * internet connection
-* yoctopuce devices
 
-On Linux, install the requirements with this command:
-`apt-get install curl php5-cli php5-curl unzip`
+#### usage - the easy way:
+1. `curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/VirtualHub_installer_or_updater.py | python`
 
-###Usage - the easy way:
-1. `curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/vh_install.sh | bash`
+#### usage
+1. Download the VirtualHub_installer_or_updater.py
+2. `python VirtualHub_installer_or_updater.py`
 
-###Usage
-1. Download the virtualhub_updater.php file to your armhf device or Mac
-2. `chmod +x virtualhub_updater.php`
-3. execute virtualhub_updater.php directly with `php virtualhub_updater.php` 
-4. or copy the script to /usr/bin/ on Raspbian or to /usr/local/bin on macOS `cp virtualhub_updater.php /usr/bin/virtualhub_updater` from now on you can start it with typing `virtualhub_updater`
+
+##### legacy info:
+this project was once written in bash and php, those files are still there for legacy reasons.
+you only need VirtualHub_installer_or_updater.py now
