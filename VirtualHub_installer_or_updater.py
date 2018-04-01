@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -25,13 +25,6 @@ except ImportError:
 
 script_version = "0.8"
 import sys,os,re,json,time,requests,shutil,zipfile,subprocess
-
-
-
-
-# check for root permissions
-if os.getuid() != 0:
-	print("info: on some systems you may need to run this script with root permissions")
 
 
 yoctopuce_url = "http://www.yoctopuce.com/EN/virtualhub.php"
