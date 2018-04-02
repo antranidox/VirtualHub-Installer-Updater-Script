@@ -25,4 +25,8 @@ If a update is available it downloads it to your device, unzips the zip file, in
 
 ##### legacy info:
 this project was once written in bash and php, those files are still there for legacy reasons.
+<<<<<<< HEAD
 you only need VirtualHub_installer_or_updater.py now
+=======
+you only need VirtualHub_installer_or_updater.py now
+>>>>>>> 190cacf4626481a100a254b74d559923c1c7b506
