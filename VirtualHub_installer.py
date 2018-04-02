@@ -257,7 +257,7 @@ if myOS[0] == "Linux":
 	if results['32bits'] == 0 and results['64bits'] == 0:
 		winner = "64bits"
 
-	fromPath = tempLocation+"/VirtualHub/"+winner+"/VirtualHub"
+	fromPath = tempLocation+"/VirtualHub/"+str(winner)+"/VirtualHub"
 
 	if winner == 'Unknown':
 		print("found NO usable VirtualHub binary!")
