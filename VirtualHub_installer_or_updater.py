@@ -3,32 +3,52 @@
 
 """
 tested with macOS 10.13.3, raspbian stretch, debian stretch
+with python 2.7.x and python 3.x
 """
 
-# check dependency: requests
-import imp
-try:
-    imp.find_module('requests')
-    found = True
-except ImportError:
-	import sys
-	print("")
-	print("")
-	print ("------------------------------ REQUIREMENT -------------------------------------")
-	print ("                    please install requests by typing:				            ")
-	print ("                          pip install requests			                     	")
-	print ("                  after that, execute this script again						    ")
-	print ("--------------------------------------------------------------------------------")
-	print("")
-	print("")
-	sys.exit()
 
-script_version = "0.8"
-import sys,os,re,json,time,requests,shutil,zipfile,subprocess
+script_version = "0.9"
+import sys,os,re,time,shutil,zipfile,subprocess,ssl,string
 
+# <<<<<<<<<<<<<<<<<<<< urllib horror
+if sys.version_info[0] == 3:
+	# python 3.x
+    from urllib.request import urlopen
+else:
+    # python 2.x
+    from urllib import urlopen
+    import urllib as urlretrieve
 
-yoctopuce_url = "http://www.yoctopuce.com/EN/virtualhub.php"
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+# >>>>>>>>>>>>>>>>>>>>> urllib horror
+
+yoctopuce_url = "https://www.yoctopuce.com/EN/virtualhub.php"
 myOS = os.uname()
+
+
+def getUrlContent_M2(url):
+	try:
+		with urlopen(url,context=ctx) as reado:
+			s = reado.read()
+		return str(s)
+	except Exception as e:
+		print("failed to getUrl '%s' with both methodes: %s"%(url,e))
+		return False
+
+def getUrlContent(url):
+	try:
+		s = urlopen(url,context=ctx).read()
+		return str(s)
+	except Exception as e:
+		m2 = getUrlContent_M2(url)
+		if m2:
+			return m2
+		else:
+			return False
+
+
 
 # execute VirtualHub binary and check returncode
 def checkVHreturnCode(binfile):
@@ -43,9 +63,12 @@ def checkVHreturnCode(binfile):
 # returns something similar to this: VirtualHub.linux.29681.zip
 def pageToZip(plattform):
 	try:
-		r = requests.get(yoctopuce_url)
+		html = getUrlContent(yoctopuce_url)
+		if not html:
+			print("Failed to extract zip filename from url")
+			return False
 		regex = r"(VirtualHub\."+plattform+"\.\d*\.zip)"
-		match = re.search(regex, r.text)
+		match = re.search(regex, html)
 		return match.group(1)
 	except Exception as e:
 		print ("error while searching for zipFile: %s" %e)
@@ -54,9 +77,12 @@ def pageToZip(plattform):
 # check virtualhub version on website
 def checkWebsiteVersion():
 	try:
-		r = requests.get(yoctopuce_url)
+		html = getUrlContent(yoctopuce_url)
+		if not html:
+			print("Failed to extract newest VH version from webpage")
+			return False
 		regex = r"VirtualHub\.linux\.(\d*)\.zip"
-		match = re.search(regex, r.text)
+		match = re.search(regex, html)
 		return match.group(1)
 	except Exception as e:
 		print ("error while searching for newest version: %s" %e)
@@ -80,12 +106,60 @@ def checkInstalledVersion():
 
 # download VirtualHub ZIP file from website
 def downloadVH(url,destination):
-	print("downloading from %s to destination %s" %(url,destination))
-	response = requests.get(url, stream=True)
-	with open(destination, 'wb') as out_file:
-	    shutil.copyfileobj(response.raw, out_file)
-	del response
+	print("downloading file from %s to %s" %(url,destination))
+	try:
+		urlretrieve.urlretrieve(url, destination,context=ctx)
+	except Exception as e:
+		try:
+			with urlopen(url, context=ctx) as u, open(destination, 'wb') as f:
+				f.write(u.read())
+		except Exception as e2:
+			print("failed to download VirtualHub, error: %s" %e2)
 
+
+
+def findFile(where,filename='libusb-1.0.so.0'):
+	process = subprocess.Popen(['find', where, '-name', filename], stdout=subprocess.PIPE)
+	process.wait()
+	if process.returncode == 0:
+		return process.communicate()[0]
+	return "not found"
+
+
+
+def synologyGetLibusb(libusbLoc):
+	if not os.path.isfile(libusbLoc):
+		print (libusbLoc+" not found, i will try to locate it in another location now..")
+		# find /volume*/@appstore/ -name libusb-1.0.so.0
+
+		for vn in xrange(1,10):
+			if os.path.exists('/volume%i/@appstore'%vn):
+				libfile = findFile('/volume%i/@appstore'%vn)
+				print ("found a libusb-1.0.so.0 on "+str(libfile))
+				return str(libfile.rstrip())
+			if os.path.exists('/volume%i/@entware'%vn):
+				libfile = findFile('/volume%i/@entware'%vn)
+				print ("found a libusb-1.0.so.0 on "+str(libfile))
+				return str(libfile.rstrip())
+
+		# nothing found
+		print("i searched everywhere, found no libusb-1.0.so.0! please install Plex Pakage from Synology Package Center")
+		print("or move a libusb-1.0.so.0 file to /lib/libusb-1.0.so.0, important: libusb version MUST be 1.0.9")
+		return False
+	# return file location
+	return libusbLoc
+
+def whichLinuxInit():
+	process = subprocess.Popen(['pidof', ' /sbin/init'], stdout=subprocess.PIPE)
+	myInit = process.communicate()[0]
+	if myInit == 1:
+		return "sysvinit"
+
+	process = subprocess.Popen(['pidof', 'systemd'], stdout=subprocess.PIPE)
+	myInit = process.communicate()[0]
+	if myInit == 1:
+		return "systemd"
+	return "Unknown"
 
 # checking versions
 webVersion = checkWebsiteVersion()
@@ -97,12 +171,39 @@ else:
 	if int(webVersion)==int(myVersion):
 		print("Installed VirtualHub is the newest available version (local: %s / web: %s)"%(myVersion,webVersion))
 		sys.exit()
+	else:
+		print("Installed VirtualHub: %s / Newest Version (web): %s)"%(myVersion,webVersion))
 
 
 # setting some plattform specific stuff
 if myOS[0] == "Linux":
 	print ("checking yoctopuce.com for VirtualHub for "+myOS[0])
 	zipFile = pageToZip('linux')
+
+	# need the FULL uname string to find synology
+	# ex: Linux LeSource 3.2.40 #22259 SMP Mon Oct 2 02:40:53 CST 2017 armv7l GNU/Linux synology_armadaxp_ds214
+	process = subprocess.Popen(['uname', '-a'], stdout=subprocess.PIPE)
+	myOSa = process.communicate()[0]
+
+	if "synology" in myOSa:
+		print("System: Synology")
+		libusbLoc = '/lib/libusb-1.0.so.0'
+		synoLibusb = synologyGetLibusb(libusbLoc)
+
+		if synoLibusb == True:
+			if synoLibusb!=libusbLoc:
+				try:
+					shutil.copyfile(synoLibusb, libusbLoc)
+				except Exception as e:
+					print('could not copy "%s" to "%s": %s'%(synoLibusb, libusbLoc, e))
+					print("please try to copy it manually and start this script again")
+					sys.exit(1)
+			else:
+				print ("could not be installed, because there is no such file /lib/libusb-1.0.so.0")
+				sys.exit(1)
+			
+
+
 	appLocation = "/usr/sbin/VirtualHub"
 	tempLocation = "/tmp"
 elif myOS[0] == "Darwin":
@@ -114,11 +215,11 @@ elif myOS[0] == "Darwin":
 	winner = "VirtualHub"
 else:
 	print ("unknown os: %s" %myOS[0])
-	sys.exit()
+	sys.exit(127)
 
 if not zipFile:
 	print ("sorry, didnt find no zipfile")
-	sys.exit()
+	sys.exit(1)
 
 # download VirtualHub.zip file
 download_url = "https://www.yoctopuce.com/FR/downloads/"+zipFile
@@ -131,7 +232,7 @@ try:
 	zip_ref.close()
 except Exception as e:
 	print ("could not unzip VirtualHub: %s" %e)
-	sys.exit()
+	sys.exit(1)
 
 
 # [LINUX] iterate over all binaries, check which one we can use
@@ -161,49 +262,55 @@ if myOS[0] == "Linux":
 	if not winner:
 		print("found NO usable VirtualHub binary!")
 		print(results)
-		sys.exit()
+		sys.exit(1)
 
 
 # moving binary to appLocation -->  /bin folder
 print ("%s is the best suited VirtualHub binary, lets move it to %s now" %(winner,appLocation))
 
 try:
-	os.rename(fromPath, appLocation)
+	shutil.copyfile(fromPath, appLocation)
 except Exception as e:
-	print ("failed to move VirtualHub binary from %s to %s" %(fromPath,appLocation))
-	sys.exit()
+	print ("failed to move VirtualHub binary from %s to %s, error: %s" %(fromPath,appLocation,e))
+	sys.exit(1)
 
 
 if myOS[0] == "Linux":
-	answer = raw_input("Install VirtualHub as a service (systemd)? (Y/N) ")
-	if answer == "Y" or answer == "Yes" or answer == "y" or answer == "yes" or answer == "yes":
-		print("installing VirtualHub startup_script..")
-		try:
-			fromPath = tempLocation+"/VirtualHub/"+winner+"/VirtualHub"
-			os.rename(tempLocation+"/VirtualHub/startup_script/yvirtualhub.service","/lib/systemd/system/VirtualHub.service")
-			command = "systemctl enable VirtualHub.service"
-			process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-			process.wait()
-			if process.returncode == 0:
-				print ("----------------------- startup_script installed ---------------------------")
-				print ("you can control VirtualHub now with these commands:")
-				print ("   service VirtualHub start|stop|restart|status")
-				print ("")
-				print ("if you want to disable the VirtualHub service:")
-				print ("   systemctl disable VirtualHub")
-				print ("----------------------------------------------------------------------------")
-		except Exception as e:
-			print ("failed to move startup_script to /lib/systemd/system/VirtualHub.service")
-			sys.exit()
+	myInit = whichLinuxInit()
+	if myInit == 'sysvinit':
+		print("sysvinit startscript support not yet implemented in this script, please copy the startscript manualy")
+
+	if myInit == 'systemd':
+		answer = raw_input("Install VirtualHub as a service (systemd)? (Y/N) ")
+		if answer == "Y" or answer == "Yes" or answer == "y" or answer == "yes" or answer == "yes":
+			print("installing VirtualHub startup_script..")
+			try:
+				fromPath = tempLocation+"/VirtualHub/"+winner+"/VirtualHub"
+				os.rename(tempLocation+"/VirtualHub/startup_script/yvirtualhub.service","/lib/systemd/system/VirtualHub.service")
+				command = "systemctl enable VirtualHub.service"
+				process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+				process.wait()
+				if process.returncode == 0:
+					print ("----------------------- startup_script installed ---------------------------")
+					print ("you can control VirtualHub now with these commands:")
+					print ("   service VirtualHub start|stop|restart|status")
+					print ("")
+					print ("if you want to disable the VirtualHub service:")
+					print ("   systemctl disable VirtualHub")
+					print ("----------------------------------------------------------------------------")
+			except Exception as e:
+				print ("failed to move startup_script to /lib/systemd/system/VirtualHub.service")
+				sys.exit(1)
 
 # [MAC] chmod +x VirtualHub binary
-if myOS[0] == "Darwin":
+if myOS[0] == "Darwin" or myOS[0] == "Linux":
 	try:
 		print("making %s executable"%appLocation)
 		os.chmod(appLocation, 755)
 	except Exception as e:
 		print("############### warning --> failed to chmod +x the VirtualHub binary: %s" %e)
 		print("you may need to execute this manualy: chmod +x "+appLocation)
+
 
 # cleaning up
 try:
