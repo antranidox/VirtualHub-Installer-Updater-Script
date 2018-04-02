@@ -238,7 +238,7 @@ except Exception as e:
 # [LINUX] iterate over all binaries, check which one we can use
 if myOS[0] == "Linux":
 	results = {"armhf": 999,"armel": 999,"32bits": 999,"64bits": 999}
-	winner = False
+	winner = 'Unknown'
 	vh_files = os.listdir(tempLocation+"/VirtualHub/")
 
 	for fina in vh_files:
@@ -259,7 +259,7 @@ if myOS[0] == "Linux":
 
 	fromPath = tempLocation+"/VirtualHub/"+winner+"/VirtualHub"
 
-	if not winner:
+	if winner == 'Unknown':
 		print("found NO usable VirtualHub binary!")
 		print(results)
 		sys.exit(1)
