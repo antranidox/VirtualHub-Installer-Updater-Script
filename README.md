@@ -8,7 +8,7 @@ If a update is available it downloads it to your device, unzips the zip file, in
 #### tested on
 +  Raspbian stretch
 +  macOS 10.13.3
-+  Synology DSM 6.x (armv7, DS214)
++  EXPERIMENTAL: Synology DSM 6.x
 
 #### requirements:
 * python 2.7 or python 3.x
@@ -21,3 +21,10 @@ If a update is available it downloads it to your device, unzips the zip file, in
 1. Download the VirtualHub_installer_or_updater.py
 2. `python VirtualHub_installer_or_updater.py`
 
+
+#### synology:
+i tested this script with a DS214 (armv7) and a the Plex Package,
+the Plex Package is needed because it has a libusb-1.0.so.0 file that is needed to run VirtualHub.
+You always can compile libusb-1.0 it yourself, if you do so, you need version 1.0.9!
+Because higher versions of libusb depend on udev and are not working on synology (AFAIK)
+You can get the source from https://sourceforge.net/projects/libusb/
