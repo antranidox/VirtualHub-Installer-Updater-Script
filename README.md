@@ -15,7 +15,7 @@ If a update is available it downloads it to your device, unzips the zip file, in
 * internet connection
 
 #### usage - the easy way:
-1. `curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/VirtualHub_installer_or_updater.py | python`
+1. `curl https://raw.githubusercontent.com/auckenox/VirtualHub-Installer-Updater-Script/master/VirtualHub_installer.py | python`
 
 #### usage
 1. Download the VirtualHub_installer_or_updater.py
