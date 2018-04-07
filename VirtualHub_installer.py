@@ -8,47 +8,67 @@ with python 2.7.x and python 3.x
 Q: why not just use requests? A: because that would add another dependency
 """
 
-script_version = "0.9"
-import sys,os,re,time,shutil,zipfile,subprocess,ssl,string
+script_version = "0.9.3"
+import sys,os,re,time,shutil,zipfile,subprocess,ssl,string,platform
+print ("welcome to the (unofficial) VirtualHub installer/updater Script v %s" %script_version)
 
-# <<<<<<<<<<<<<<<<<<<< urllib horror
+# checking args
+verbose = False
+if len(sys.argv)>1:
+	if sys.argv[1]=="-v":
+		verbose = True
+		print("verbose mode: on")
+
+
+# get current OS
+myOS = platform.uname()
+
+# urllib for python2+3
 if sys.version_info[0] >= 3:
 	# python 3.x and up
-    from urllib.request import urlopen
+	if verbose:
+		print("this is python3 or higher, importing urlopen from urllib.request")
+	from urllib.request import urlopen
 else:
-    # python 2.x
-    from urllib import urlopen
-    import urllib as urlretrieve
+	# python 2.x
+	if verbose:
+		print("this is python 2.x, importing urlopen from urllib and urllib as urlretrieve")
+	from urllib import urlopen
+	import urllib as urlretrieve
+
 
 # dont check ssl cert
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
-# >>>>>>>>>>>>>>>>>>>>> urllib horror
+
 
 # url of the virtualhub update site
 yoctopuce_url = "https://www.yoctopuce.com/EN/virtualhub.php"
 
-# get current OS
-myOS = os.uname()
 
 
-# same as getUrlContent
+# same as getUrlContent but for python 2.x
 def getUrlContent_M2(url):
+	if verbose:
+		print("using methode2 to get url")
 	try:
-		with urlopen(url,context=ctx) as reado:
+		with urlopen(url,timeout=15,context=ctx) as reado:
 			s = reado.read()
 		return str(s)
 	except Exception as e:
 		print("failed to getUrl '%s' with both methodes: %s"%(url,e))
 		return False
 
-# get html-code of url
+# get html-code of url (python 3.x version)
 def getUrlContent(url):
+	if verbose:
+		print("using methode1 to get url")
 	try:
 		s = urlopen(url,context=ctx).read()
 		return str(s)
 	except Exception as e:
+		print(e)
 		m2 = getUrlContent_M2(url)
 		if m2:
 			return m2
@@ -67,48 +87,70 @@ def checkVHreturnCode(binfile):
 
 # gets the zip filename from html-source via regex
 # returns something similar to this: VirtualHub.linux.29681.zip
-def pageToZip(plattform):
+def pageToZip(currentPlatform):
 	try:
 		html = getUrlContent(yoctopuce_url)
 		if not html:
 			print("Failed to extract zip filename from url")
 			return False
-		regex = r"(VirtualHub\."+plattform+"\.\d*\.zip)"
+		regex = r"(VirtualHub\."+currentPlatform+"\.\d*\.zip)"
 		match = re.search(regex, html)
+		if verbose:
+			print("searching in source of '"+yoctopuce_url+"' for VirtualHub."+currentPlatform)
+			print("found match: %s" %match.group(1))
 		return match.group(1)
 	except Exception as e:
-		print ("error while searching for zipFile: %s" %e)
+		print ("Error while searching for zipFile: %s" %e)
 		return False
 
 # check virtualhub version on website
-def checkWebsiteVersion():
+def checkWebsiteVersion(myOS):
 	try:
 		html = getUrlContent(yoctopuce_url)
 		if not html:
 			print("Failed to extract newest VH version from webpage")
 			return False
-		regex = r"VirtualHub\.linux\.(\d*)\.zip"
+		regex = r"VirtualHub\.linux\.(\d*)\.zip" # would be better to search for specific plattform!
 		match = re.search(regex, html)
+		if verbose:
+			print("searching in source of '"+yoctopuce_url+"' for VirtualHub Version")
+			print("found versions match: %s" %match.group(1))
 		return match.group(1)
 	except Exception as e:
-		print ("error while searching for newest version: %s" %e)
+		print ("Error while searching for newest version: %s" %e)
 		return False
 
 # check if virtualhub is installed and which version
-def checkInstalledVersion():
+def checkInstalledVersion(myOS):
+	if myOS[0] == "Windows":
+		print("Sorry, update is not yet implemented for Windows")
+		return "00000"
+
+	if verbose:
+		print("trying to open VirtualHub with the -v command, to get Version of current installed VirtualHub")
+
 	command = "VirtualHub -v"
 	process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
 	process.wait()
 	myVersionString = str(process.communicate()[0])
+	
+	if process.returncode == 126:
+		print("Failed to start VirtualHub, please give the VirtualHub binary chmod +x / execute rights")
+		return False
+
 	if process.returncode != 0:
+		if verbose:
+			print("Failed to find VirtualHub binary, got errorcode: "+str(process.returncode))
 		return False
 
 	try:
 		regex = r"\.(\d*) \("
 		match = re.search(regex, myVersionString)
+		if verbose:
+			print("Nice! We got a installed VirtualHub, Version: "+str(match.group(1)))
 		return match.group(1)
 	except Exception as e:
-		print ("error while parsing local version: %s" %e)
+		print ("Error while parsing installed Version: %s" %e)
 		return False
 
 # download VirtualHub ZIP file from website
@@ -126,10 +168,15 @@ def downloadVH(url,destination):
 
 # synology specific function: searches for libusb in given path
 def findFile(where,filename='libusb-1.0.so.0'):
+	if verbose:
+		print("searching for %s in %s" %(filename,where))
 	process = subprocess.Popen(['find', where, '-name', filename], stdout=subprocess.PIPE)
 	process.wait()
 	if process.returncode == 0:
 		return process.communicate()[0]
+
+	if verbose:
+		print("Failed to find %s in %s -- got errorcode: %s" %(filename,where,str(process.returncode)))
 	return "not found"
 
 
@@ -151,10 +198,12 @@ def synologyGetLibusb(libusbLoc):
 				return str(libfile.rstrip())
 
 		# nothing found
-		print("i searched everywhere, found no libusb-1.0.so.0! please install Plex Pakage from Synology Package Center")
+		print("i searched everywhere, found no libusb-1.0.so.0! please install Plex Package from Synology Package Center")
 		print("or move a compatible libusb-1.0.so.0 file to /lib/libusb-1.0.so.0, important: libusb version MUST be 1.0.9")
 		return False
 	# return file location
+	if verbose:
+		print("found libusb-1.0.so.0 here: %s" %libusbLoc)
 	return libusbLoc
 
 # linux specific function, checks which init system is beeing used: systemd,initv or unknown
@@ -162,18 +211,25 @@ def whichLinuxInit():
 	process = subprocess.Popen(['pidof', ' /sbin/init'], stdout=subprocess.PIPE)
 	myInit = process.communicate()[0]
 	if myInit == 1:
+		if verbose:
+			print("this system is using sysvinit")
 		return "sysvinit"
 
 	process = subprocess.Popen(['pidof', 'systemd'], stdout=subprocess.PIPE)
 	myInit = process.communicate()[0]
 	if myInit == 1:
+		if verbose:
+			print("this system is using systemd")
 		return "systemd"
+
+	if verbose:
+		print("could not determine which init this system uses: Unknown")
 	return "Unknown"
 
 
 # checking VirtualHub versions local VS newest (web)
-webVersion = checkWebsiteVersion()
-myVersion = checkInstalledVersion()
+webVersion = checkWebsiteVersion(myOS)
+myVersion = checkInstalledVersion(myOS)
 
 # VirtualHub not found or not installed
 if not myVersion:
@@ -188,7 +244,7 @@ else:
 		print("Installed VirtualHub: %s / Newest Version (web): %s)"%(myVersion,webVersion))
 
 
-# setting some plattform specific stuff like /tmp folder and binary location
+# setting some platform specific stuff like /tmp folder and binary location
 if myOS[0] == "Linux":
 	print ("checking yoctopuce.com for VirtualHub for "+myOS[0])
 	zipFile = pageToZip('linux')
@@ -221,11 +277,19 @@ if myOS[0] == "Linux":
 	appLocation = "/usr/sbin/VirtualHub"
 	tempLocation = "/tmp"
 elif myOS[0] == "Darwin":
-	print ("checking yoctopuce.com for VirtualHub for "+myOS[0])
+	print ("checking yoctopuce.com for VirtualHub for macOS")
 	zipFile = pageToZip('osx')
 	appLocation = "/usr/local/bin/VirtualHub"
 	tempLocation = "/tmp"
 	fromPath = tempLocation+"/VirtualHub/VirtualHub"
+	winner = "VirtualHub"
+elif myOS[0] == "Windows":
+	print ("checking yoctopuce.com for VirtualHub for "+myOS[0])
+	zipFile = pageToZip('windows')
+	windowsDesktopPath = os.path.join(os.environ["HOMEPATH"], "Desktop")
+	appLocation = windowsDesktopPath+"\\VirtualHub"
+	tempLocation = windowsDesktopPath
+	fromPath = tempLocation+"/VirtualHub"
 	winner = "VirtualHub"
 else:
 	print ("unknown os: %s" %myOS[0])
@@ -249,7 +313,7 @@ except Exception as e:
 	sys.exit(1)
 
 
-# [LINUX] iterate over all binaries, check which one we can use on the current plattform/architecture
+# linux specific: iterate over all binaries, check which one we can use on the current platform/architecture
 # this is just try and error, using the exit code
 if myOS[0] == "Linux":
 	results = {"armhf": 999,"armel": 999,"32bits": 999,"64bits": 999}
@@ -317,7 +381,7 @@ if myOS[0] == "Linux":
 				print ("failed to move startup_script to /lib/systemd/system/VirtualHub.service")
 				sys.exit(1)
 
-# [MAC] chmod +x VirtualHub binary
+# mac specific chmod +x VirtualHub binary
 if myOS[0] == "Darwin" or myOS[0] == "Linux":
 	try:
 		print("making %s executable"%appLocation)
@@ -325,6 +389,12 @@ if myOS[0] == "Darwin" or myOS[0] == "Linux":
 	except Exception as e:
 		print("############### warning --> failed to chmod +x the VirtualHub binary: %s" %e)
 		print("you may need to execute this manualy: chmod +x "+appLocation)
+
+
+# windows specific
+if myOS[0] == "Windows":
+	print("VirtualHub is now on your desktop, i will open it for you now")
+	os.system(appLocation)
 
 
 # cleaning up, removing tmp folder and zip file
