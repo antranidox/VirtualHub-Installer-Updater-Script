@@ -243,10 +243,19 @@ else:
 		# VirtualHub update available
 		print("Installed VirtualHub: %s / Newest Version (web): %s)"%(myVersion,webVersion))
 
+
 # checking if VirtualHub is running, kill it if its running
+# TODO: this only works on Linux, NOT on macOS or windows because pidof is no available on mac or win
+print("checking now if VirtualHub is running...")
 process = subprocess.Popen('pidof VirtualHub', shell=True, stdout=subprocess.PIPE)
 process.wait()
 if process.returncode == 0:
+	i=5
+	while i>0:
+		print("VirtualHub is currently running, killing in %i seconds! press CTRL-C to cancel" %i)
+		time.sleep(1)
+		i = i -1
+
 	kill_process = subprocess.Popen('killall VirtualHub', shell=True, stdout=subprocess.PIPE)
 
 
