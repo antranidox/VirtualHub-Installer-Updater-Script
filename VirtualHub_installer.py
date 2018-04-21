@@ -8,7 +8,7 @@ with python 2.7.x and python 3.x
 Q: why not just use requests? A: because that would add another dependency
 """
 
-script_version = "0.9.3"
+script_version = "0.9.4"
 import sys,os,re,time,shutil,zipfile,subprocess,ssl,string,platform
 print ("welcome to the (unofficial) VirtualHub installer/updater Script v %s" %script_version)
 
@@ -242,6 +242,12 @@ else:
 	else:
 		# VirtualHub update available
 		print("Installed VirtualHub: %s / Newest Version (web): %s)"%(myVersion,webVersion))
+
+# checking if VirtualHub is running, kill it if its running
+process = subprocess.Popen('pidof VirtualHub', shell=True, stdout=subprocess.PIPE)
+process.wait()
+if process.returncode == 0:
+	kill_process = subprocess.Popen('killall VirtualHub', shell=True, stdout=subprocess.PIPE)
 
 
 # setting some platform specific stuff like /tmp folder and binary location
