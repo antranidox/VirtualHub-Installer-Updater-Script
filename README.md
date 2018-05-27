@@ -11,7 +11,7 @@ If a update is available it downloads it to your device, unzips the zip file, in
 +  EXPERIMENTAL: Synology DSM 6.x
 
 #### requirements:
-* python 2.7 or python 3.x
+* python 2.7 or python 3.x (use python3 on macOS)
 * internet connection
 
 #### usage - the easy way:
@@ -19,7 +19,7 @@ If a update is available it downloads it to your device, unzips the zip file, in
 
 #### usage
 1. Download the VirtualHub_installer_or_updater.py
-2. `python VirtualHub_installer_or_updater.py`
+2. `python3 VirtualHub_installer_or_updater.py`
 
 
 #### synology:
