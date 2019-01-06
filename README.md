@@ -18,4 +18,4 @@ If a update is available it downloads it to your device, unzips the zip file, in
 
 #### usage
 1. `git clone https://github.com/auckenox/VirtualHub-Installer-Updater-Script.git && cd VirtualHub-Installer-Updater-Script`
-2. `python3 VirtualHub_installer_or_updater.py`
+2. `python3 VirtualHub_installer.py`
